@@ -60,6 +60,15 @@ def main():
         action="store_true",
         help="Overwrite the input .bib file instead of writing <texbase>-clean.bib.",
     )
+    parser.add_argument(
+        "--aux",
+        help="Path to an existing .aux file to use. If given, pdflatex is skipped.",
+    )
+    parser.add_argument(
+        "--skip-pdflatex",
+        action="store_true",
+        help="Skip pdflatex and use the existing <texbase>.aux file.",
+    )
     args = parser.parse_args()
 
     tex_path = Path(args.tex).resolve()
@@ -71,17 +80,25 @@ def main():
 
     tex_dir = tex_path.parent
     tex_base = tex_path.stem
-    aux_path = tex_dir / f"{tex_base}.aux"
+    aux_path = Path(args.aux).resolve() if args.aux else tex_dir / f"{tex_base}.aux"
     json_path = tex_dir / f"{tex_base}-unused.json"
     clean_bib_path = bib_path if args.overwrite else tex_dir / f"{tex_base}-clean.bib"
 
-    run(["pdflatex", "-interaction=nonstopmode", tex_path.name], cwd=tex_dir)
+    skip_pdflatex = args.skip_pdflatex or args.aux is not None or aux_path.is_file()
+    if skip_pdflatex:
+        print(f"Skipping pdflatex; using existing aux: {aux_path}", flush=True)
+    else:
+        run(["pdflatex", "-interaction=nonstopmode", tex_path.name], cwd=tex_dir)
     if not aux_path.is_file():
-        sys.exit(f"aux file not produced: {aux_path}")
+        sys.exit(
+            f"aux file not available: {aux_path}\n"
+            "Compile the document first, or pass --aux <path> to point at an existing .aux."
+        )
 
+    aux_dir = aux_path.parent
     run(
-        find_checkcites() + ["-u", aux_path.name, "-j", json_path.name],
-        cwd=tex_dir,
+        find_checkcites() + ["-u", aux_path.name, "-j", str(json_path)],
+        cwd=aux_dir,
         check=False,
     )
     if not json_path.is_file():
