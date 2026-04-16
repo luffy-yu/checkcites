@@ -93,9 +93,13 @@ def main():
     bib_text = bib_path.read_text(encoding="utf-8")
     v2 = hasattr(bibtexparser, "parse_string") and hasattr(bibtexparser, "write_string")
     if v2:
+        from bibtexparser.model import Entry, String, Preamble
+
         library = bibtexparser.parse_string(bib_text)
         toremove = [e for e in library.entries if e.key in unused]
         library.remove(toremove)
+        keep = [b for b in library.blocks if isinstance(b, (Entry, String, Preamble))]
+        library.remove([b for b in library.blocks if b not in keep])
         out_text = bibtexparser.write_string(library)
         remaining = len(library.entries)
     else:
@@ -105,6 +109,7 @@ def main():
         before = len(db.entries)
         db.entries = [e for e in db.entries if e.get("ID") not in unused]
         toremove = [None] * (before - len(db.entries))
+        db.comments = []
         out_text = bibtexparser.dumps(db)
         remaining = len(db.entries)
 
