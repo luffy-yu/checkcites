@@ -118,6 +118,65 @@ Note the `--backend` flag used for BibLaTeX support. We can even omit the
 file extension, the script will automatically assign one based on the
 current backend.
 
+## `clean_unused_bib.py`
+
+A small Python helper that drives `pdflatex` and `checkcites.lua` for you,
+then removes the unused entries from your `.bib` file.
+
+### Requirements
+
+- A TeX distribution on `PATH` that provides `pdflatex` and `texlua`
+  (TeX Live, MiKTeX, or MacTeX).
+- `checkcites.lua` either on `PATH` or next to the script.
+- Python 3.8+ with `bibtexparser`. Either the stable v1 (`pip install bibtexparser`)
+  or the v2 pre-release (`pip install bibtexparser --pre`) works; the script
+  detects which is installed.
+
+### Usage
+
+```bash
+python clean_unused_bib.py --tex input.tex --bib refs.bib
+```
+
+Arguments:
+
+- `--tex` — path to the main `.tex` file.
+- `--bib` — path to the `.bib` file to clean.
+- `--overwrite` — optional flag. When set, the input `.bib` is overwritten
+  in place. Otherwise (default), a new `<texbase>-clean.bib` is written.
+
+### What it does
+
+1. Runs `pdflatex -interaction=nonstopmode <tex>` in the tex file's directory
+   to (re)generate the `.aux` file.
+2. Runs `checkcites.lua -u <texbase>.aux -j <texbase>-unused.json` from the
+   same directory so bib lookup via `kpse` works.
+3. Parses `<texbase>-unused.json` and removes those citation keys from the
+   bib, writing the result to either `<texbase>-clean.bib` or — with
+   `--overwrite` — back to the input `.bib`.
+
+### Outputs
+
+Written next to the `.tex` file, using the tex basename:
+
+- `<texbase>-unused.json` — the list of unused citation keys from `checkcites`.
+- `<texbase>-clean.bib` — the cleaned bibliography (omitted when `--overwrite`
+  is used; the input `.bib` is rewritten instead).
+
+### Example
+
+```bash
+$ python clean_unused_bib.py --tex main.tex --bib main.bib
+...
+Removed 5 unused entries; 46 remain.
+Unused keys: .../main-unused.json
+Cleaned bib: .../main-clean.bib
+```
+
+Note: `checkcites.lua` exits with a non-zero status when it finds unused
+references. The helper script treats that as a normal result (not an error)
+and proceeds as long as the JSON report was produced.
+
 ## License
 
 This script is licensed under the LaTeX Project Public License.

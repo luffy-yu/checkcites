@@ -1,0 +1,12 @@
+bibtexparser==1.4.4
+conda-env-export==0.6.2
+importlib-metadata==8.0.0
+jaraco.collections==5.1.0
+matplotlib==3.10.7
+openpyxl==3.1.5
+pandas==2.3.3
+pip==25.3
+platformdirs==4.2.2
+ruamel-yaml-clib==0.2.15
+tomli==2.0.1
+wheel==0.45.1

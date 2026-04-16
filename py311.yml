@@ -1,0 +1,7 @@
+name: py311
+channels: []
+dependencies:
+  - python=3.11.14
+  - pip:
+      - -r requirements.txt
+prefix: D:\ProgramData\Anaconda3\envs\py311
